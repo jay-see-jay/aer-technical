@@ -1,10 +1,12 @@
-import express from "express";
+import express, { Request } from "express";
 import * as console from "console";
-import { companiesHandler } from "./handlers.js";
+import { getCompaniesHandler, getCompanyHandler } from "./handlers.js";
 
 const app = express();
 
-app.get("/companies", companiesHandler);
+app.get("/companies", getCompaniesHandler);
+
+app.get("/companies/:companyId", getCompanyHandler);
 
 export const server = app.listen(3000, () => {
   console.log("Express up!");
