@@ -1,4 +1,4 @@
-import express, { Request } from "express";
+import express from "express";
 import * as console from "console";
 import { getCompaniesHandler, getCompanyHandler } from "./handlers.js";
 

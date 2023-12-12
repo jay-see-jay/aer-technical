@@ -9,6 +9,7 @@ FROM (
         *
     FROM
         company
+    {filter}
     LIMIT ?
     OFFSET ?
 ) company

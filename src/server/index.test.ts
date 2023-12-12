@@ -36,6 +36,16 @@ describe("API", () => {
     expect(firstResult["id"]).toEqual(26);
   });
 
+  it("/companies returns only active companies", async () => {
+    const response = await request(server).get("/companies?active=1&limit=10");
+    expect(response.headers["content-type"]).toMatch("/json");
+    expect(response.status).toEqual(200);
+    expect(Array.isArray(response.body)).toEqual(true);
+    for (const row of response.body) {
+      expect(row["active"]).toEqual(true);
+    }
+  });
+
   it("/companies/:id returns single company", async () => {
     const response = await request(server).get("/companies/100");
     expect(response.headers["content-type"]).toMatch("/json");

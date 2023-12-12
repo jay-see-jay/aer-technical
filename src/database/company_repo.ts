@@ -1,7 +1,6 @@
 import fs from "fs";
 import { CompanyWithEmployee, IDatabase } from "./types";
 import { isValidCompany, isValidEmployee } from "../shared/helpers.js";
-import * as console from "console";
 
 class CompanyRepo {
   private getCompanyStatement: string;
@@ -46,10 +45,23 @@ class CompanyRepo {
   async getCompanies(
     limit: number,
     offset: number,
+    active?: number,
   ): Promise<CompanyWithEmployee[]> {
+    let statement = this.getCompaniesStatement;
+    const args = [limit, offset];
+    if (active != undefined) {
+      statement = this.getCompaniesStatement.replace(
+        /{filter}/,
+        "WHERE active = ?",
+      );
+      args.unshift(active);
+    } else {
+      statement = this.getCompaniesStatement.replace(/{filter}/, "");
+    }
+    console.log("statement", statement);
     const result = await this.db.read({
-      sql: this.getCompaniesStatement,
-      args: [limit, offset],
+      sql: statement,
+      args: args,
     });
 
     const { rows } = result;
