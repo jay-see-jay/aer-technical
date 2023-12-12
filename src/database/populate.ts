@@ -1,8 +1,10 @@
 import fs from "fs";
-import database, { BatchStatement } from "./index.js";
+import database from "./index.js";
 import * as process from "process";
 import { readJsonFile } from "../shared/helpers.js";
 import validator, { Entities } from "../shared/validator.js";
+import { InStatement } from "@libsql/client";
+import { Company, Employee } from "./types";
 
 const db = database;
 
@@ -13,28 +15,6 @@ if (await db.isPopulated()) {
 
 const companyDataFiles = fs.readdirSync("src/data/companies");
 const employeeDataFiles = fs.readdirSync("src/data/employees");
-
-type Employee = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string | null;
-  role: string;
-  company_id: number | null;
-};
-
-type Company = {
-  id: number;
-  name: string;
-  industry: string;
-  active: boolean;
-  website: string;
-  telephone: string;
-  slogan: string;
-  address: string;
-  city: string;
-  country: string;
-};
 
 function validateJson<T>(entity: Entities, file: string): (T | null)[] {
   const fileContents = readJsonFile(`src/data/${entity}/${file}`);
@@ -86,7 +66,7 @@ try {
   console.log("e", e);
 }
 
-const insertCompanyStatements = companies.map((company): BatchStatement => {
+const insertCompanyStatements = companies.map((company): InStatement => {
   const active = company.active ? 1 : 0;
   return {
     sql: "INSERT INTO company(id, name, industry, active, website, telephone, slogan, address, city, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -105,7 +85,7 @@ const insertCompanyStatements = companies.map((company): BatchStatement => {
   };
 });
 
-const insertEmployeeStatements = employees.map((employee): BatchStatement => {
+const insertEmployeeStatements = employees.map((employee): InStatement => {
   if (employee.role === null) {
     console.log("employee", employee);
   }

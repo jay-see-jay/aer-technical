@@ -1,11 +1,7 @@
-import { Client, createClient, ResultSet } from "@libsql/client";
+import { Client, createClient, InStatement, ResultSet } from "@libsql/client";
+import { IDatabase } from "./types";
 
-export type BatchStatement = {
-  sql: string;
-  args: (number | string | null)[];
-};
-
-class Database {
+class Database implements IDatabase {
   private client: Client;
 
   constructor() {
@@ -18,11 +14,11 @@ class Database {
     await this.client.executeMultiple(statement);
   }
 
-  async read(statement: string): Promise<ResultSet> {
+  async read(statement: InStatement): Promise<ResultSet> {
     return this.client.execute(statement);
   }
 
-  async insertBatch(statements: BatchStatement[]): Promise<ResultSet[]> {
+  async insertBatch(statements: InStatement[]): Promise<ResultSet[]> {
     return this.client.batch(statements, "write");
   }
 

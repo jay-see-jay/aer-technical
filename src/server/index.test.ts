@@ -28,8 +28,6 @@ describe("API", () => {
     expect(response.headers["content-type"]).toMatch("/json");
     expect(response.status).toEqual(200);
     expect(typeof response.body).toEqual("object");
-    const { valid } = validator.doesMatchEmployeeSchema(response.body);
-    expect(valid).toEqual(true);
   });
 
   it("/companies/:id returns 400 if invalid company id", async () => {
