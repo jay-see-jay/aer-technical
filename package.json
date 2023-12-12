@@ -5,6 +5,7 @@
   "main": "src/server/index.ts",
   "scripts": {
     "serve": "nodemon src/server/index.ts",
+    "db:populate": "ts-node src/database/populate.ts",
     "test": "jest"
   },
   "type": "module",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "@libsql/client": "0.4.0-pre.5",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "jsonschema": "^1.4.1"
   }
 }
