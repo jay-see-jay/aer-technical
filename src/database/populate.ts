@@ -1,9 +1,8 @@
-import { Validator } from "jsonschema";
 import fs from "fs";
 import database, { BatchStatement } from "./index.js";
 import * as process from "process";
-
-const v = new Validator();
+import { readJsonFile } from "../shared/helpers.js";
+import validator, { Entities } from "../shared/validator.js";
 
 const db = database;
 
@@ -14,9 +13,6 @@ if (await db.isPopulated()) {
 
 const companyDataFiles = fs.readdirSync("src/data/companies");
 const employeeDataFiles = fs.readdirSync("src/data/employees");
-
-const companySchema = readJsonFile("src/data/schemas/companies.json");
-const employeeSchema = readJsonFile("src/data/schemas/employees.json");
 
 type Employee = {
   id: number;
@@ -40,18 +36,9 @@ type Company = {
   country: string;
 };
 
-function readJsonFile(path: string): any {
-  const buf = fs.readFileSync(path);
-  return JSON.parse(buf.toString());
-}
-
-function validateJson<T>(
-  entity: "companies" | "employees",
-  file: string,
-): (T | null)[] {
-  const schema = entity === "companies" ? companySchema : employeeSchema;
+function validateJson<T>(entity: Entities, file: string): (T | null)[] {
   const fileContents = readJsonFile(`src/data/${entity}/${file}`);
-  const result = v.validate(fileContents, schema);
+  const result = validator.doesMatchSchema(entity, fileContents);
   if (!Array.isArray(result.instance)) {
     throw Error("TODO : Handle errors when JSON is not a valid array");
   }
