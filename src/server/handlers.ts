@@ -1,11 +1,15 @@
 import { Request, Response } from "express";
 import CompanyRepo from "../database/company_repo.js";
 import database from "../database/index.js";
+import * as console from "console";
 
 const repo = new CompanyRepo(database);
 
-export function getCompaniesHandler(req: Request, res: Response) {
-  res.json("Companies");
+export async function getCompaniesHandler(req: Request, res: Response) {
+  const limit = Number(req.query["limit"]) || 25;
+  const offset = Number(req.query["offset"]) || 0;
+  const companies = await repo.getCompanies(limit, offset);
+  res.json(companies);
 }
 
 export async function getCompanyHandler(req: Request, res: Response) {

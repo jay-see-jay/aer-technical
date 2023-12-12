@@ -46,7 +46,6 @@ export function isValidCompany(row: Row): CompanyWithEmployee | undefined {
 export function isValidEmployee(
   row: Row,
 ): Omit<Employee, "company_id" | "id"> | undefined {
-  console.log("row", row);
   const keys = new Map<string, string[]>([
     ["employee_first_name", ["string"]],
     ["employee_last_name", ["string"]],
