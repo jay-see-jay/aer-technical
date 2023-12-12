@@ -3,6 +3,20 @@
 
 ## Usage
 
+### Setup
+
+First install dependencies and make sure the correct version of Node is being used. There is a .nvmrc file so, if you use nvm simply run:
+
+```shell
+nvm use 
+```
+
+To install dependencies using [pnpm](https://pnpm.io/)
+
+```shell
+pnpm i
+```
+
 ### Populate database
 
 To ensure all data is validated, first run the script below to load all data into a SQLite database.
@@ -29,7 +43,7 @@ pnpm test
 pnpm serve
 ```
 
-To request a single company, eg. with the ID:
+To request a single company, eg. with the ID 100:
 
 ```shell
 curl http://localhost3000/companies/100
