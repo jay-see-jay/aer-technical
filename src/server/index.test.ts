@@ -1,6 +1,7 @@
 import { server } from "./index.js";
 import request from "supertest";
 import * as console from "console";
+import validator from "../shared/validator";
 
 afterAll(() => {
   server.close();
@@ -18,5 +19,7 @@ describe("API", () => {
     expect(response.status).toEqual(200);
     expect(Array.isArray(response.body)).toEqual(true);
     expect(response.body.length).toEqual(50);
+    const { valid } = validator.doesMatchCompanySchema(response.body);
+    expect(valid).toEqual(true);
   });
 });
