@@ -8,7 +8,8 @@ export async function getCompaniesHandler(req: Request, res: Response) {
   const limit = Number(req.query["limit"]) || 25;
   const offset = Number(req.query["offset"]) || 0;
   const active = Number(req.query["active"]) || undefined;
-  const companies = await repo.getCompanies(limit, offset, active);
+  const name = (req.query["name"] as string) || undefined;
+  const companies = await repo.getCompanies(limit, offset, { active, name });
   res.json(companies);
 }
 

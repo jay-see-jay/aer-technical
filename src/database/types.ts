@@ -32,3 +32,8 @@ export type Company = {
 export type CompanyWithEmployee = Company & {
   employees: Omit<Employee, "company_id" | "id">[];
 };
+
+export type Filters = {
+  active?: number;
+  name?: string;
+};

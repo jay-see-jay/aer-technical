@@ -1,6 +1,8 @@
 import fs from "fs";
-import { CompanyWithEmployee, IDatabase } from "./types";
+import { CompanyWithEmployee, Filters, IDatabase } from "./types";
 import { isValidCompany, isValidEmployee } from "../shared/helpers.js";
+import { InArgs } from "@libsql/client";
+import * as console from "console";
 
 class CompanyRepo {
   private getCompanyStatement: string;
@@ -45,20 +47,29 @@ class CompanyRepo {
   async getCompanies(
     limit: number,
     offset: number,
-    active?: number,
+    filters: Filters,
   ): Promise<CompanyWithEmployee[]> {
     let statement = this.getCompaniesStatement;
-    const args = [limit, offset];
-    if (active != undefined) {
+    const args: InArgs = [limit, offset];
+    const filterStatements: string[] = [];
+    const filterArgs: InArgs = [];
+    if (filters.active != undefined) {
+      filterStatements.push("active = ?");
+      filterArgs.push(filters.active);
+    }
+    if (filters.name) {
+      filterStatements.push("name LIKE ?");
+      filterArgs.push(`%${filters.name}%`);
+    }
+    args.unshift(...filterArgs);
+    if (filterStatements.length > 0) {
       statement = this.getCompaniesStatement.replace(
         /{filter}/,
-        "WHERE active = ?",
+        `WHERE ${filterStatements.join(" AND ")}`,
       );
-      args.unshift(active);
     } else {
       statement = this.getCompaniesStatement.replace(/{filter}/, "");
     }
-    console.log("statement", statement);
     const result = await this.db.read({
       sql: statement,
       args: args,

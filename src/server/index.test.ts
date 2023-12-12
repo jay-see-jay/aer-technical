@@ -46,6 +46,19 @@ describe("API", () => {
     }
   });
 
+  it("/companies returns companies filtered by name", async () => {
+    const name = "Anderson";
+    const regex = new RegExp(name, "gi");
+    const response = await request(server).get(`/companies?name=${name}`);
+    expect(Array.isArray(response.body)).toEqual(true);
+    for (const row of response.body) {
+      const companyName = row["name"];
+      expect(typeof companyName).toEqual("string");
+      if (typeof companyName != "string") continue;
+      expect(companyName).toMatch(regex);
+    }
+  });
+
   it("/companies/:id returns single company", async () => {
     const response = await request(server).get("/companies/100");
     expect(response.headers["content-type"]).toMatch("/json");
