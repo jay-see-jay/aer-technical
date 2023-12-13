@@ -1,5 +1,6 @@
 import { server } from "./index.js";
 import request from "supertest";
+import * as console from "console";
 
 afterAll(() => {
   server.close();
@@ -65,6 +66,24 @@ describe("API", () => {
       expect(typeof companyName).toEqual("string");
       if (typeof companyName != "string") continue;
       expect(companyName).toMatch(regex);
+    }
+  });
+
+  it("/companies returns companies filtered by employee name", async () => {
+    const name = "and";
+    const response = await request(server).get(`/companies?employee=${name}`);
+    expect(typeof response.body).toEqual("object");
+    const data = response.body["data"];
+    expect(Array.isArray(data)).toEqual(true);
+    for (const row of data) {
+      const employees = row["employees"];
+      expect(Array.isArray(employees)).toEqual(true);
+      const matchedEmployees = employees.filter((employee: any) => {
+        const fullName =
+          `${employee.first_name} ${employee.last_name}`.toLowerCase();
+        return fullName.includes(name);
+      });
+      expect(matchedEmployees.length).toBeGreaterThan(0);
     }
   });
 

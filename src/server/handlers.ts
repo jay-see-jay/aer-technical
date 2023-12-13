@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import CompanyRepo from "../database/company_repo.js";
 import database from "../database/index.js";
-import * as console from "console";
 
 const repo = new CompanyRepo(database);
 

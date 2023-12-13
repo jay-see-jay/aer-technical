@@ -235,7 +235,6 @@ class CompanyRepo {
       }
       if (lastCompanyId < count.last) {
         url.searchParams.set("offset", `${offset + limit}`);
-        console.log("url", url);
         paginatedData.next = `${url.origin}${url.pathname}${url.search}`;
       }
     }
