@@ -69,6 +69,8 @@ Pass active as either `0` or `1` to get companies that are `inactive` or `active
 curl "http://localhost:3000/companies?limit=5&active=0"
 ```
 
+To filter by company name:
+
 ```shell
 curl "http://localhost:3000/companies?name=Anderson&active=0"
 ```
@@ -79,7 +81,7 @@ To filter by employee name:
 curl "http://localhost:3000/companies?employee=Randa"
 ```
 
-This returns a list of companies that has at least one employee that matches the query passed to `employee`. For this, and when searching by company name, pagination isn't currently supported.
+This returns a list of companies that has at least one employee that matches the query passed to `employee`.
 
 ## Brief
 
