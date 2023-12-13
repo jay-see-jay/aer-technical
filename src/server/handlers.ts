@@ -17,10 +17,12 @@ export async function getCompaniesHandler(req: Request, res: Response) {
     active = activeParam;
   }
   const name = (req.query["name"] as string) || undefined;
+  const employee = (req.query["employee"] as string) || undefined;
 
   const companies = await repo.getCompanies(limit, offset, url, {
     active,
     name,
+    employee,
   });
   res.json(companies);
 }

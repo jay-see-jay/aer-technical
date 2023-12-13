@@ -14,6 +14,7 @@ class CompanyRepo {
   private getCompanyStatement: string;
   private getCompaniesStatement: string;
   private countCompaniesStatement: string;
+  private getCompaniesByEmployeeStatement: string;
   private db: IDatabase;
 
   constructor(db: IDatabase) {
@@ -27,6 +28,10 @@ class CompanyRepo {
 
     this.countCompaniesStatement = fs
       .readFileSync("src/database/get_total_companies.sql")
+      .toString();
+
+    this.getCompaniesByEmployeeStatement = fs
+      .readFileSync("src/database/get_companies_by_employee_name.sql")
       .toString();
 
     this.db = db;
@@ -71,6 +76,7 @@ class CompanyRepo {
   addFilters(filters: Filters): { statements: string[]; args: InValue[] } {
     const filterStatements: string[] = [];
     const filterArgs: InValue[] = [];
+
     if (filters.active != undefined) {
       filterStatements.push("active = ?");
       filterArgs.push(filters.active);
@@ -143,17 +149,22 @@ class CompanyRepo {
     url: URL,
     filters: Filters,
   ): Promise<PaginatedData<CompanyWithEmployee[]>> {
-    const args: InValue[] = [limit, offset];
-
+    let statement: string;
+    let args: InValue[];
     const { statements: filterStatements, args: filterArgs } =
       this.addFilters(filters);
 
-    const statement = this.insertFilters(
-      filterStatements,
-      this.getCompaniesStatement,
-    );
-
-    args.unshift(...filterArgs);
+    if (filters.employee) {
+      statement = this.getCompaniesByEmployeeStatement;
+      args = [`%${filters.employee}%`];
+    } else {
+      args = [limit, offset];
+      statement = this.insertFilters(
+        filterStatements,
+        this.getCompaniesStatement,
+      );
+      args.unshift(...filterArgs);
+    }
 
     const result = await this.db.read({
       sql: statement,
@@ -191,7 +202,12 @@ class CompanyRepo {
     const companyIds = Array.from(companies.keys()).sort((a, b) => a - b);
     const firstCompanyId = companyIds[0];
     const lastCompanyId = companyIds[companyIds.length - 1];
-    if (firstCompanyId && lastCompanyId && count.count > companyIds.length) {
+    if (
+      firstCompanyId &&
+      lastCompanyId &&
+      count.count > companyIds.length &&
+      !filters.employee
+    ) {
       if (firstCompanyId > count.first) {
         url.searchParams.set("offset", `${offset - limit}`);
         paginatedData.prev = `${url.origin}${url.pathname}${url.search}`;

@@ -36,6 +36,7 @@ export type CompanyWithEmployee = Company & {
 export type Filters = {
   active?: number;
   name?: string;
+  employee?: string;
 };
 
 export type ResultsCount = {
