@@ -5,7 +5,7 @@
 
 ### Setup
 
-First install dependencies and make sure the correct version of Node (v18.7.0) is being used. There is a .nvmrc file, if you use nvm simply run:
+First install dependencies and make set the Node version (v18.7.0). There is a .nvmrc file, so if you use nvm simply run:
 
 ```shell
 nvm use 
