@@ -5,7 +5,7 @@
 
 ### Setup
 
-First install dependencies and make sure the correct version of Node is being used. There is a .nvmrc file, if you use nvm simply run:
+First install dependencies and make sure the correct version of Node (v18.7.0) is being used. There is a .nvmrc file, if you use nvm simply run:
 
 ```shell
 nvm use 
@@ -46,7 +46,7 @@ pnpm serve
 To request a single company, eg. with the ID 100:
 
 ```shell
-curl http://localhost3000/companies/100
+curl http://localhost:3000/companies/100
 ```
 
 To request a list of companies:
