@@ -8,7 +8,6 @@ import {
 } from "./types";
 import { isValidCompany, isValidEmployee } from "../shared/helpers.js";
 import { InValue, Row } from "@libsql/client";
-import * as console from "console";
 
 class CompanyRepo {
   private getCompanyStatement: string;

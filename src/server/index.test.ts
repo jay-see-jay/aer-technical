@@ -1,6 +1,5 @@
 import { server } from "./index.js";
 import request from "supertest";
-import * as console from "console";
 
 afterAll(() => {
   server.close();
