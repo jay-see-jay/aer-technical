@@ -14,5 +14,9 @@ FROM (
         employee_name LIKE ?
 ) employee
 INNER JOIN
-    company ON company.id = employee.company_id;
+    company ON company.id = employee.company_id
+{filter}
+ORDER BY company.id ASC
+LIMIT ?
+OFFSET ?;
 

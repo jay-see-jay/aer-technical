@@ -15,6 +15,7 @@ class CompanyRepo {
   private getCompaniesStatement: string;
   private countCompaniesStatement: string;
   private getCompaniesByEmployeeStatement: string;
+  private countCompaniesByEmployeeStatement: string;
   private db: IDatabase;
 
   constructor(db: IDatabase) {
@@ -32,6 +33,10 @@ class CompanyRepo {
 
     this.getCompaniesByEmployeeStatement = fs
       .readFileSync("src/database/get_companies_by_employee_name.sql")
+      .toString();
+
+    this.countCompaniesByEmployeeStatement = fs
+      .readFileSync("src/database/get_total_companies_by_employee.sql")
       .toString();
 
     this.db = db;
@@ -60,12 +65,17 @@ class CompanyRepo {
     return company;
   }
 
-  insertFilters(statements: string[], statement: string): string {
+  insertFilters(
+    statements: string[],
+    statement: string,
+    hasFilterByEmployee: boolean,
+  ): string {
     let statementWithFilters = statement;
     if (statements.length > 0) {
+      const whereString = hasFilterByEmployee ? "AND" : "WHERE";
       statementWithFilters = statement.replace(
         /{filter}/,
-        `WHERE ${statements.join(" AND ")}`,
+        `${whereString} ${statements.join(" AND ")}`,
       );
     } else {
       statementWithFilters = statement.replace(/{filter}/, "");
@@ -76,6 +86,10 @@ class CompanyRepo {
   addFilters(filters: Filters): { statements: string[]; args: InValue[] } {
     const filterStatements: string[] = [];
     const filterArgs: InValue[] = [];
+
+    if (filters.employee) {
+      filterArgs.push(`%${filters.employee}%`);
+    }
 
     if (filters.active != undefined) {
       filterStatements.push("active = ?");
@@ -92,7 +106,7 @@ class CompanyRepo {
     };
   }
 
-  validateCountRow(row: Row): ResultsCount {
+  validateCountRow(row: Row): ResultsCount | undefined {
     const keys = ["first", "last", "count"] as const;
 
     let first: number;
@@ -101,9 +115,7 @@ class CompanyRepo {
     for (const key of keys) {
       const value = row[key];
       if (!(key in row) || typeof value !== "number") {
-        throw Error(
-          `Could not identify ${key} when validating number of possible results`,
-        );
+        return undefined;
       }
       if (key === "first") {
         first = value;
@@ -126,8 +138,16 @@ class CompanyRepo {
   async countResults(
     filters: string[],
     args: InValue[],
-  ): Promise<ResultsCount> {
-    const statement = this.insertFilters(filters, this.countCompaniesStatement);
+    hasFilterByEmployee: boolean,
+  ): Promise<ResultsCount | undefined> {
+    const selectStatement = hasFilterByEmployee
+      ? this.countCompaniesByEmployeeStatement
+      : this.countCompaniesStatement;
+    const statement = this.insertFilters(
+      filters,
+      selectStatement,
+      hasFilterByEmployee,
+    );
 
     const result = await this.db.read({
       sql: statement,
@@ -149,29 +169,30 @@ class CompanyRepo {
     url: URL,
     filters: Filters,
   ): Promise<PaginatedData<CompanyWithEmployee[]>> {
-    let statement: string;
-    let args: InValue[];
     const { statements: filterStatements, args: filterArgs } =
       this.addFilters(filters);
 
-    if (filters.employee) {
-      statement = this.getCompaniesByEmployeeStatement;
-      args = [`%${filters.employee}%`];
-    } else {
-      args = [limit, offset];
-      statement = this.insertFilters(
-        filterStatements,
-        this.getCompaniesStatement,
-      );
-      args.unshift(...filterArgs);
-    }
+    const args: InValue[] = [limit, offset];
+    const selectStatement = filters.employee
+      ? this.getCompaniesByEmployeeStatement
+      : this.getCompaniesStatement;
+    const statement = this.insertFilters(
+      filterStatements,
+      selectStatement,
+      false,
+    );
+    args.unshift(...filterArgs);
 
     const result = await this.db.read({
       sql: statement,
       args: args,
     });
 
-    const count = await this.countResults(filterStatements, filterArgs);
+    const count = await this.countResults(
+      filterStatements,
+      filterArgs,
+      Boolean(filters.employee),
+    );
 
     const { rows } = result;
 
@@ -203,10 +224,10 @@ class CompanyRepo {
     const firstCompanyId = companyIds[0];
     const lastCompanyId = companyIds[companyIds.length - 1];
     if (
+      count &&
       firstCompanyId &&
       lastCompanyId &&
-      count.count > companyIds.length &&
-      !filters.employee
+      count.count > companyIds.length
     ) {
       if (firstCompanyId > count.first) {
         url.searchParams.set("offset", `${offset - limit}`);

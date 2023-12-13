@@ -58,8 +58,28 @@ curl http://localhost:3000/companies
 By default, the limit is set to 25, and the offset to 0, but these values can be updated using query parameters.
 
 ```shell
-curl http://localhost:3000/companies?limit=50&offset=25
+curl "http://localhost:3000/companies?limit=50&offset=25"
 ```
+
+If more results are available, prev and/or next URLs will be provided in the response. The `/companies` endpoint also supports filtering by company name, active status, and employee name.
+
+Pass active as either `0` or `1` to get companies that are `inactive` or `active` respectively.
+
+```shell
+curl "http://localhost:3000/companies?limit=5&active=0"
+```
+
+```shell
+curl "http://localhost:3000/companies?name=Anderson&active=0"
+```
+
+To filter by employee name:
+
+```shell
+curl "http://localhost:3000/companies?employee=Randa"
+```
+
+This returns a list of companies that has at least one employee that matches the query passed to `employee`. For this, and when searching by company name, pagination isn't currently supported.
 
 ## Brief
 
