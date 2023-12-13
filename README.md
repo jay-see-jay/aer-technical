@@ -5,7 +5,7 @@
 
 ### Setup
 
-First install dependencies and make sure the correct version of Node is being used. There is a .nvmrc file so, if you use nvm simply run:
+First install dependencies and make sure the correct version of Node is being used. There is a .nvmrc file, if you use nvm simply run:
 
 ```shell
 nvm use 
