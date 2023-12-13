@@ -1,12 +1,19 @@
 import fs from "fs";
-import { CompanyWithEmployee, Filters, IDatabase } from "./types";
+import {
+  CompanyWithEmployee,
+  Filters,
+  IDatabase,
+  PaginatedData,
+  ResultsCount,
+} from "./types";
 import { isValidCompany, isValidEmployee } from "../shared/helpers.js";
-import { InArgs } from "@libsql/client";
+import { InValue, Row } from "@libsql/client";
 import * as console from "console";
 
 class CompanyRepo {
   private getCompanyStatement: string;
   private getCompaniesStatement: string;
+  private countCompaniesStatement: string;
   private db: IDatabase;
 
   constructor(db: IDatabase) {
@@ -16,6 +23,10 @@ class CompanyRepo {
 
     this.getCompaniesStatement = fs
       .readFileSync("src/database/get_companies.sql")
+      .toString();
+
+    this.countCompaniesStatement = fs
+      .readFileSync("src/database/get_total_companies.sql")
       .toString();
 
     this.db = db;
@@ -44,15 +55,22 @@ class CompanyRepo {
     return company;
   }
 
-  async getCompanies(
-    limit: number,
-    offset: number,
-    filters: Filters,
-  ): Promise<CompanyWithEmployee[]> {
-    let statement = this.getCompaniesStatement;
-    const args: InArgs = [limit, offset];
+  insertFilters(statements: string[], statement: string): string {
+    let statementWithFilters = statement;
+    if (statements.length > 0) {
+      statementWithFilters = statement.replace(
+        /{filter}/,
+        `WHERE ${statements.join(" AND ")}`,
+      );
+    } else {
+      statementWithFilters = statement.replace(/{filter}/, "");
+    }
+    return statementWithFilters;
+  }
+
+  addFilters(filters: Filters): { statements: string[]; args: InValue[] } {
     const filterStatements: string[] = [];
-    const filterArgs: InArgs = [];
+    const filterArgs: InValue[] = [];
     if (filters.active != undefined) {
       filterStatements.push("active = ?");
       filterArgs.push(filters.active);
@@ -61,24 +79,93 @@ class CompanyRepo {
       filterStatements.push("name LIKE ?");
       filterArgs.push(`%${filters.name}%`);
     }
-    args.unshift(...filterArgs);
-    if (filterStatements.length > 0) {
-      statement = this.getCompaniesStatement.replace(
-        /{filter}/,
-        `WHERE ${filterStatements.join(" AND ")}`,
-      );
-    } else {
-      statement = this.getCompaniesStatement.replace(/{filter}/, "");
+
+    return {
+      statements: filterStatements,
+      args: filterArgs,
+    };
+  }
+
+  validateCountRow(row: Row): ResultsCount {
+    const keys = ["first", "last", "count"] as const;
+
+    let first: number;
+    let last: number;
+    let count: number;
+    for (const key of keys) {
+      const value = row[key];
+      if (!(key in row) || typeof value !== "number") {
+        throw Error(
+          `Could not identify ${key} when validating number of possible results`,
+        );
+      }
+      if (key === "first") {
+        first = value;
+      }
+      if (key === "last") {
+        last = value;
+      }
+      if (key === "count") {
+        count = value;
+      }
     }
+
+    return {
+      first: first!,
+      last: last!,
+      count: count!,
+    };
+  }
+
+  async countResults(
+    filters: string[],
+    args: InValue[],
+  ): Promise<ResultsCount> {
+    const statement = this.insertFilters(filters, this.countCompaniesStatement);
+
     const result = await this.db.read({
       sql: statement,
       args: args,
     });
 
+    const firstResult: Row | undefined = result.rows[0];
+
+    if (!firstResult) {
+      throw Error("Failed to count number of possible results");
+    }
+
+    return this.validateCountRow(firstResult);
+  }
+
+  async getCompanies(
+    limit: number,
+    offset: number,
+    url: URL,
+    filters: Filters,
+  ): Promise<PaginatedData<CompanyWithEmployee[]>> {
+    const args: InValue[] = [limit, offset];
+
+    const { statements: filterStatements, args: filterArgs } =
+      this.addFilters(filters);
+
+    const statement = this.insertFilters(
+      filterStatements,
+      this.getCompaniesStatement,
+    );
+
+    args.unshift(...filterArgs);
+
+    const result = await this.db.read({
+      sql: statement,
+      args: args,
+    });
+
+    const count = await this.countResults(filterStatements, filterArgs);
+
     const { rows } = result;
 
     const firstResult = rows[0];
-    if (!firstResult) return [];
+    if (!firstResult) return { data: [] };
 
     const companies = new Map<number, CompanyWithEmployee>();
 
@@ -97,7 +184,26 @@ class CompanyRepo {
       companies.set(company.id, existingCompany);
     }
 
-    return Array.from(companies.values());
+    const paginatedData: PaginatedData<CompanyWithEmployee[]> = {
+      data: Array.from(companies.values()),
+    };
+
+    const companyIds = Array.from(companies.keys()).sort((a, b) => a - b);
+    const firstCompanyId = companyIds[0];
+    const lastCompanyId = companyIds[companyIds.length - 1];
+    if (firstCompanyId && lastCompanyId && count.count > companyIds.length) {
+      if (firstCompanyId > count.first) {
+        url.searchParams.set("offset", `${offset - limit}`);
+        paginatedData.prev = `${url.origin}${url.pathname}${url.search}`;
+      }
+      if (lastCompanyId < count.last) {
+        url.searchParams.set("offset", `${offset + limit}`);
+        console.log("url", url);
+        paginatedData.next = `${url.origin}${url.pathname}${url.search}`;
+      }
+    }
+
+    return paginatedData;
   }
 }
 

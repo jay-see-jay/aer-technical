@@ -37,3 +37,15 @@ export type Filters = {
   active?: number;
   name?: string;
 };
+
+export type ResultsCount = {
+  first: number;
+  last: number;
+  count: number;
+};
+
+export type PaginatedData<T> = {
+  data: T;
+  next?: string;
+  prev?: string;
+};

@@ -10,6 +10,7 @@ FROM (
     FROM
         company
     {filter}
+    ORDER BY id ASC
     LIMIT ?
     OFFSET ?
 ) company
