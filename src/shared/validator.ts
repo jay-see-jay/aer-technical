@@ -1,5 +1,5 @@
 import { Validator, ValidatorResult } from "jsonschema";
-import { readJsonFile } from "./helpers";
+import { readJsonFile } from "./helpers.js";
 
 export type Entities = "companies" | "employees";
 
@@ -10,8 +10,8 @@ class JSONValidator {
 
   constructor() {
     this.v = new Validator();
-    this.employeeSchema = readJsonFile("src/data/schemas/companies.json");
-    this.companySchema = readJsonFile("src/data/schemas/employees.json");
+    this.companySchema = readJsonFile("src/data/schemas/companies.json");
+    this.employeeSchema = readJsonFile("src/data/schemas/employees.json");
   }
 
   doesMatchCompanySchema(json: any): ValidatorResult {

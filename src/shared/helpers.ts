@@ -1,7 +1,6 @@
 import fs from "fs";
 import { Row } from "@libsql/client";
 import { CompanyWithEmployee, Employee } from "../database/types";
-import * as console from "console";
 
 export function readJsonFile(path: string): any {
   const buf = fs.readFileSync(path);

@@ -5,6 +5,7 @@ import { readJsonFile } from "../shared/helpers.js";
 import validator, { Entities } from "../shared/validator.js";
 import { InStatement } from "@libsql/client";
 import { Company, Employee } from "./types";
+import * as console from "console";
 
 const db = database;
 
